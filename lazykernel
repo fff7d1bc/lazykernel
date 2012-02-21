@@ -1,0 +1,163 @@
+#!/bin/bash
+unset kernelrelease kernelentrynumber initramfs
+
+workdir="$(pwd)"
+
+if [ -r /etc/lazykernel.conf ]; then
+	. /etc/lazykernel.conf
+else
+	echo "Missing /etc/lazykernel.conf"
+	exit 1
+fi
+
+wat() { echo ">>> ${FUNCNAME[1]}() ..."; }
+
+check_kernel_sources() {
+	if ! [ -f "${workdir}/Kbuild" ] || ! [ -f "${workdir}/Makefile" ]; then
+		echo "The \"${workdir}/\" does not contain kernel sources, propably."
+		exit 1
+	fi
+}
+
+get_kernel_release() {
+	if [ -z "${kernelrelease}" ]; then
+		kernelrelease="$(make kernelrelease)"
+	fi
+}
+
+deploy() {
+	wat
+	check_kernel_sources
+	get_kernel_release
+	if ! [ -f 'arch/x86/boot/bzImage' ]; then
+		echo "there is no bzImage."
+		exit 1
+	fi
+
+	echo ">>> Deploying '${kernelrelease}' ..."
+
+	make modules_install
+	cp arch/x86/boot/bzImage "/boot/bzImage-${kernelrelease}"
+}
+
+list() {
+	get_kernels_versions
+}
+
+get_kernels_versions() {
+	shopt -s nullglob
+	for bzImage in $(sort -r < <(printf '%s\n' /boot/bzImage-*)); do
+		echo "${bzImage##/boot/bzImage-}"
+	done
+	shopt -u nullglob
+}
+
+clean() {
+	wat
+	bzImages=( $(get_kernels_versions) )
+	kernels_to_remove=( ${bzImages[@]:3} )
+
+	if [ "${#kernels_to_remove[@]}" = 0 ]; then
+		echo "Nothing to remove."
+		return
+	fi
+
+	echo 'The following kernels will be removed:'
+	printf '\t%s\n' "${kernels_to_remove[@]}"
+
+	local answer
+	echo -n "Sure you want to remove all those kernels? [yN] "
+	read -n 1 answer
+	echo
+	if ! [[ "${answer}" =~ ^[yY]$ ]]; then exit 1; fi
+
+	remove_kernel "${kernels_to_remove[@]}"
+}
+
+gen-extlinuxconf() {
+	wat
+	cp /boot/extlinux/extlinux.conf /boot/extlinux/extlinux.conf.old
+
+	(
+		echo "# This configuration file was generated automatically by gen-extlinuxconf.
+
+TIMEOUT 30
+UI menu.c32
+
+MENU TITLE Boot Menu
+MENU COLOR title	1;37;40
+MENU COLOR border	30;40
+MENU COLOR unsel	37;40
+"
+
+		if [ "$(stat -c '%d' '/')" = "$(stat -c '%d' '/boot')" ]; then
+			bootdir='/boot'
+		else
+			bootdir=''
+		fi
+		
+		shopt -s nullglob
+		for bzImage in $(get_kernels_versions); do
+			kernelentrynumber="${kernelentrynumber:-1}"
+			echo "LABEL kernel${kernelentrynumber}_${bzImage}"
+			echo "	MENU LABEL ${menu_entry_name} ${bzImage}"
+			echo "	LINUX ${bootdir}/${bzImage}"
+			if [ -n "${initramfs}" ] && [ -f "/boot/${initramfs}" ]; then
+				echo "	INITRD ${bootdir}/${initramfs}"
+			fi
+			if [ -n "${kernel_params}" ]; then
+				echo "	APPEND ${kernel_params}"
+			fi
+
+			kernelentrynumber="$((kernelentrynumber+1))"
+			echo
+		done
+
+		# If there is memdisk and disk images, add them to menu as well. useful for example for freedos images to update BIOS etc.
+		if [ -f '/boot/extlinux/memdisk' ]; then
+			for diskimage in /boot/*.iso /boot/*.img; do
+				# Skip images with initrd or initramfs prefix.
+				if [[ "${diskimage##*/}" =~ ^initrd.*$ ]] || [[ "${diskimage##*/}" =~ ^initramfs.*$ ]]; then continue; fi
+				memdiskentrynumber=${memdiskentrynumber:-1}
+				imagesize="$(($(stat -c '%s' "${diskimage}")/1024/1024))"
+				echo "LABEL memdisk${memdiskentrynumber}_${diskimage##*/}"
+				echo "	MENU LABEL Boot image: '${diskimage##*/}' (${imagesize} MB)"
+				echo "	LINUX memdisk"
+				echo "	INITRD ${bootdir}/${diskimage##*/}"
+				if [[ "${diskimage##*/}" =~ ^.*.iso$ ]]; then
+					echo "	APPEND iso"
+				elif [[ "${diskimage##*/}" =~ ^.*.img$ ]]; then
+					echo "	APPEND raw"
+				fi
+				memdiskentrynumber="$((memdiskentrynumber+1))"
+				echo
+			done
+		fi
+		shopt -u nullglob
+	) > /boot/extlinux/extlinux.conf
+}
+
+remove_kernel() {
+	wat
+	for kernel in "$@"; do
+		if [ -f "/boot/bzImage-${kernel}" ]; then
+			echo ">>> Removing /boot/bzImage-${kernel} ..."
+			rm -f "/boot/bzImage-${kernel}"
+		fi
+		if [ -d "/lib/modules/${kernel}" ]; then
+			echo ">>> Removing /lib/modules/${kernel}/ ..."
+			rm -rf "/lib/modules/${kernel}/"
+		fi
+	done
+}
+
+case "$1" in
+	list|deploy|clean|remove_kernel|gen-extlinuxconf)
+		"$1" "${@:2}"
+	;;
+	auto)
+		deploy
+		clean
+		gen-extlinuxconf
+	;;
+esac

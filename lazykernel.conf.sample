@@ -1,0 +1,9 @@
+# The name for menu entry.
+menu_entry_name="Gentoo Linux"
+
+# Specify what initramfs image to use, if any. (Optional)
+#initramfs='initramfs.cpio.gz'
+
+# Append kernel params, usualy you use it to specify rootfs device, but you can use it to pass switches to initramfs as well. (Optional)
+#kernel_params='root=/dev/sda2'
+#kernel_params="rootfstype=ext4 luks enc_root=/dev/sda2 lvm root=/dev/mapper/vg-rootfs uswsusp resume=/dev/mapper/vg-swap"
