@@ -1,3 +1,6 @@
+# After configuring, hash or remove line below.
+CONFIGUREFIRST
+
 # The name for menu entry.
 menu_entry_name="Gentoo Linux"
 

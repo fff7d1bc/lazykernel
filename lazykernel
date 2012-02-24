@@ -3,6 +3,12 @@ unset kernelrelease kernelentrynumber initramfs
 
 workdir="$(pwd)"
 
+# A dummy function to prevent people from using lazykernel before they edit /etc/lazykernel.conf
+CONFIGUREFIRST() {
+	echo "First you need to edit /etc/lazykernel.conf."
+	exit 1
+}
+
 if [ -r /etc/lazykernel.conf ]; then
 	. /etc/lazykernel.conf
 else
