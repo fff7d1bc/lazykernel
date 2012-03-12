@@ -75,7 +75,7 @@ clean() {
 	echo -n "Sure you want to remove all those kernels? [yN] "
 	read -n 1 answer
 	echo
-	if ! [[ "${answer}" =~ ^[yY]$ ]]; then exit 1; fi
+	if ! [[ "${answer}" =~ ^[yY]$ ]]; then return 1; fi
 
 	remove_kernel "${kernels_to_remove[@]}"
 }
