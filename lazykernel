@@ -52,7 +52,7 @@ list() {
 
 get_kernels_versions() {
 	shopt -s nullglob
-	for bzImage in $(sort -r < <(printf '%s\n' /boot/bzImage-*)); do
+	for bzImage in $(sort -r --version-sort < <(printf '%s\n' /boot/bzImage-*)); do
 		echo "${bzImage##/boot/bzImage-}"
 	done
 	shopt -u nullglob
