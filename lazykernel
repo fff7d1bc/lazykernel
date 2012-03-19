@@ -61,7 +61,8 @@ get_kernels_versions() {
 clean() {
 	wat
 	bzImages=( $(get_kernels_versions) )
-	kernels_to_remove=( ${bzImages[@]:3} )
+	if [ -z "${keep_kernels}" ]; then keep_kernels='3'; fi
+	kernels_to_remove=( ${bzImages[@]:${keep_kernels}} )
 
 	if [ "${#kernels_to_remove[@]}" = 0 ]; then
 		echo "Nothing to remove."
