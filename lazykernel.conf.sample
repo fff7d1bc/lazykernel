@@ -4,6 +4,10 @@ CONFIGUREFIRST
 # Number of the kernels to keep so `lazykernel clean` will not propose to remove them. Default: 3
 #keep_kernels=5
 
+# Sort kernels by 'version' (biggest version first) or by 'mtime' (latest images first). Default: mtime
+# Sorting by version may fail and 3.3.0-rc2 will be marked as newer than 3.3.0.
+#sort_by='version'
+
 # The name for menu entry.
 menu_entry_name="Gentoo Linux"
 

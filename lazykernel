@@ -52,9 +52,19 @@ list() {
 
 get_kernels_versions() {
 	shopt -s nullglob
-	for bzImage in $(sort -r --version-sort < <(printf '%s\n' /boot/bzImage-*)); do
-		echo "${bzImage##/boot/bzImage-}"
-	done
+	if [ -z "${sort_by}" ]; then sort_by='mtime'; fi
+	if [ "${sort_by}" = 'version' ]; then
+		for bzImage in $(sort -r --version-sort < <(printf '%s\n' /boot/bzImage-*)); do
+			echo "${bzImage##/boot/bzImage-}"
+		done
+	elif [ "${sort_by}" = 'mtime' ]; then
+		for bzImage in $(ls -t /boot/bzImage-*); do
+			echo "${bzImage##/boot/bzImage-}"
+		done
+	else
+		echo 'Wrong sort_by variable.'
+		exit 1
+	fi
 	shopt -u nullglob
 }
 
