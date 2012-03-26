@@ -16,11 +16,13 @@ else
 	exit 1
 fi
 
-wat() { echo ">>> ${FUNCNAME[1]}() ..."; }
+einfo() { echo -e "\033[1;32m>>> \033[0m$@"; }
+eerror() { echo -e "\033[1;31m>>> \033[0m$@" >&2; }
+wat() { einfo "${FUNCNAME[1]}() ..."; }
 
 check_kernel_sources() {
 	if ! [ -f "${workdir}/Kbuild" ] || ! [ -f "${workdir}/Makefile" ]; then
-		echo "The \"${workdir}/\" does not contain kernel sources, propably."
+		eerror "The \"${workdir}/\" does not contain kernel sources, propably."
 		exit 1
 	fi
 }
@@ -36,11 +38,11 @@ deploy() {
 	check_kernel_sources
 	get_kernel_release
 	if ! [ -f 'arch/x86/boot/bzImage' ]; then
-		echo "there is no bzImage."
+		eerror "there is no bzImage."
 		exit 1
 	fi
 
-	echo ">>> Deploying '${kernelrelease}' ..."
+	einfo "Deploying '${kernelrelease}' ..."
 
 	make modules_install
 	cp arch/x86/boot/bzImage "/boot/bzImage-${kernelrelease}"
@@ -62,7 +64,7 @@ get_kernels_versions() {
 			echo "${bzImage##/boot/bzImage-}"
 		done
 	else
-		echo 'Wrong sort_by variable.'
+		eerror 'Wrong sort_by variable.'
 		exit 1
 	fi
 	shopt -u nullglob
@@ -75,11 +77,11 @@ clean() {
 	kernels_to_remove=( ${bzImages[@]:${keep_kernels}} )
 
 	if [ "${#kernels_to_remove[@]}" = 0 ]; then
-		echo "Nothing to remove."
+		einfo "Nothing to remove."
 		return
 	fi
 
-	echo 'The following kernels will be removed:'
+	einfo 'The following kernels will be removed:'
 	printf '\t%s\n' "${kernels_to_remove[@]}"
 
 	local answer
@@ -93,8 +95,13 @@ clean() {
 
 gen-extlinuxconf() {
 	wat
+	kernels=( $(get_kernels_versions) )
+	if [ "${#kernels[@]}" -lt '1' ]; then
+		eerror "No kernel images?"
+		return 1
+	fi
 	cp /boot/extlinux/extlinux.conf /boot/extlinux/extlinux.conf.old
-
+	shopt -s nullglob
 	(
 		echo "# This configuration file was generated automatically by gen-extlinuxconf.
 
@@ -113,8 +120,7 @@ MENU COLOR unsel	37;40
 			bootdir=''
 		fi
 		
-		shopt -s nullglob
-		for bzImage_ver in $(get_kernels_versions); do
+		for bzImage_ver in "${kernels[@]}"; do
 			kernelentrynumber="${kernelentrynumber:-1}"
 			echo "LABEL kernel${kernelentrynumber}_bzImage-${bzImage_ver}"
 			echo "	MENU LABEL ${menu_entry_name} bzImage-${bzImage_ver}"
@@ -150,8 +156,9 @@ MENU COLOR unsel	37;40
 				echo
 			done
 		fi
-		shopt -u nullglob
 	) > /boot/extlinux/extlinux.conf
+	shopt -u nullglob
+	printf '    * %s\n' "${kernels[@]}"
 }
 
 remove_kernel() {
