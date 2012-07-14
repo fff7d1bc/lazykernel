@@ -45,6 +45,7 @@ deploy() {
 	einfo "Deploying '${kernelrelease}' ..."
 
 	make modules_install
+	depmod -qa
 	cp arch/x86/boot/bzImage "/boot/bzImage-${kernelrelease}"
 }
 
