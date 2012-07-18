@@ -101,7 +101,7 @@ gen-extlinuxconf() {
 		eerror "No kernel images?"
 		return 1
 	fi
-	cp /boot/extlinux/extlinux.conf /boot/extlinux/extlinux.conf.old
+	test -f /boot/extlinux/extlinux.conf && cp /boot/extlinux/extlinux.conf /boot/extlinux/extlinux.conf.old
 	shopt -s nullglob
 	(
 		echo "# This configuration file was generated automatically by gen-extlinuxconf.
