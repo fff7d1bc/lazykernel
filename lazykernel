@@ -1,6 +1,8 @@
 #!/bin/bash
 unset kernelrelease kernelentrynumber initramfs
 
+version='0.1'
+
 workdir="$(pwd)"
 
 # A dummy function to prevent people from using lazykernel before they edit /etc/lazykernel.conf
@@ -176,6 +178,24 @@ remove_kernel() {
 	done
 }
 
+help() {
+cat <<EOF
+${0##*/} v${version}
+
+	Options:
+	deploy - copy bzImage to /boot/bzImage-<kernel-version> and run make modules_install.
+	clean - Try to remove old kernel images if there is more than keep_kernels parametr from config.
+	list - list kernels from /boot.
+	remove_kernel <version> - remove kernel <version>
+	gen-extlinuxconf - regenerate /boot/extlinux/extlinux.conf
+	auto - also known as 'ultra lazy mode', run deploy, clean and gen-extlinuxconf.
+
+2012 (c) Piotr Karbowski <piotr.karbowski@gmail.com>
+Work smart not hard.
+
+EOF
+}
+
 case "$1" in
 	list|deploy|clean|remove_kernel|gen-extlinuxconf)
 		"$1" "${@:2}"
@@ -184,5 +204,9 @@ case "$1" in
 		deploy
 		clean
 		gen-extlinuxconf
+	;;
+	*)
+		help
+		exit 1
 	;;
 esac
