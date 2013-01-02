@@ -131,6 +131,9 @@ MENU COLOR unsel	37;40
 			if [ -n "${initramfs}" ] && [ -f "/boot/${initramfs}" ]; then
 				echo "	INITRD ${bootdir}/${initramfs}"
 			fi
+			if [ "${initramfs_per_kernel}" = 'true' ] && [ -f "/boot/initramfs-${bzImage_ver}" ]; then
+				echo "	INITRD ${bootdir}/initramfs-${bzImage_ver}"
+			fi
 			if [ -n "${kernel_params}" ]; then
 				echo "	APPEND ${kernel_params}"
 			fi
