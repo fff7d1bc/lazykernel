@@ -162,6 +162,20 @@ MENU COLOR unsel	37;40
 				echo
 			done
 		fi
+		# If reboot.c32 and poweroff.c32 are present add them as well
+		if [ -f '/boot/extlinux/reboot.c32' ]; then
+		echo "LABEL reboot"
+		echo "	MENU LABEL Reboot"
+		echo "	COM32 reboot.c32 "
+		echo
+		fi
+		if [ -f '/boot/extlinux/poweroff.c32' ]; then
+		echo "LABEL poweroff"
+		echo "	MENU LABEL Power Off"
+		echo "	COM32 poweroff.c32 "
+		echo
+		fi
+		
 	) > /boot/extlinux/extlinux.conf
 	shopt -u nullglob
 	printf '    * %s\n' "${kernels[@]}"
