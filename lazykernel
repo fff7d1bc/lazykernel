@@ -120,19 +120,19 @@ MENU COLOR unsel	37;40
 		if [ "$(stat -c '%d' '/')" = "$(stat -c '%d' '/boot')" ]; then
 			bootdir='/boot'
 		else
-			bootdir=''
+			bootdir='/'
 		fi
 		
 		for bzImage_ver in "${kernels[@]}"; do
 			kernelentrynumber="${kernelentrynumber:-1}"
 			echo "LABEL kernel${kernelentrynumber}_bzImage-${bzImage_ver}"
 			echo "	MENU LABEL ${menu_entry_name} bzImage-${bzImage_ver}"
-			echo "	LINUX ${bootdir}/bzImage-${bzImage_ver}"
-			if [ -n "${initramfs}" ] && [ -f "/boot/${initramfs}" ]; then
-				echo "	INITRD ${bootdir}/${initramfs}"
+			echo "	LINUX ${bootdir}bzImage-${bzImage_ver}"
+			if [ -n "${initramfs}" ]; then
+				echo "	INITRD ${bootdir}${initramfs//,/,${bootdir}}"
 			fi
 			if [ "${initramfs_per_kernel}" = 'true' ] && [ -f "/boot/initramfs-${bzImage_ver}" ]; then
-				echo "	INITRD ${bootdir}/initramfs-${bzImage_ver}"
+				echo "	INITRD ${bootdir}initramfs-${bzImage_ver}"
 			fi
 			if [ -n "${kernel_params}" ]; then
 				echo "	APPEND ${kernel_params}"
@@ -152,7 +152,7 @@ MENU COLOR unsel	37;40
 				echo "LABEL memdisk${memdiskentrynumber}_${diskimage##*/}"
 				echo "	MENU LABEL Boot image: '${diskimage##*/}' (${imagesize} MB)"
 				echo "	LINUX memdisk"
-				echo "	INITRD ${bootdir}/${diskimage##*/}"
+				echo "	INITRD ${bootdir}${diskimage##*/}"
 				if [[ "${diskimage##*/}" =~ ^.*.iso$ ]]; then
 					echo "	APPEND iso"
 				elif [[ "${diskimage##*/}" =~ ^.*.img$ ]]; then
