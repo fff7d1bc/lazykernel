@@ -13,6 +13,7 @@ menu_entry_name="Gentoo Linux"
 
 # Specify what initramfs image to use, if any. (Optional)
 #initramfs='initramfs.cpio.gz'
+#initramfs='initramfs.cpio.gz,firmware-initramfs.cpio.gz'
 
 # Specify whatever we should pickup the initramfs with version of kernel.
 # It can be used along with initramfs=, multi-initramfs support.
