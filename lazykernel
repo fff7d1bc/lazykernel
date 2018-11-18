@@ -98,12 +98,22 @@ clean() {
 
 gen-extlinuxconf() {
 	wat
+
+	if [ -d /boot/EFI/BOOT ]; then
+		extlinux_conf="/boot/EFI/BOOT/extlinux.conf"
+	elif [ -d /boot/extlinux ]; then
+		extlinux_conf="/boot/extlinux/extlinux.conf"
+	else
+		eerror 'Unable to find extlinux installation directory under /boot.'
+		exit 1
+	fi
+
 	kernels=( $(get_kernels_versions) )
 	if [ "${#kernels[@]}" -lt '1' ]; then
 		eerror "No kernel images?"
 		return 1
 	fi
-	test -f /boot/extlinux/extlinux.conf && cp /boot/extlinux/extlinux.conf /boot/extlinux/extlinux.conf.old
+	test -f "${extlinux_conf}" && cp "${extlinux_conf}" "${extlinux_conf}.old"
 	shopt -s nullglob
 	(
 		echo "# This configuration file was generated automatically by gen-extlinuxconf.
@@ -162,7 +172,7 @@ MENU COLOR unsel	37;40
 				echo
 			done
 		fi
-	) > /boot/extlinux/extlinux.conf
+	) > "${extlinux_conf}"
 	shopt -u nullglob
 	printf '    * %s\n' "${kernels[@]}"
 }
